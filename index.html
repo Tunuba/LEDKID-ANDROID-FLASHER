@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RoboKit Flasher - Spike WebUSB</title>
+<meta name="theme-color" content="#0d0f14">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── RoboKit Design System — Industrial Control Panel ── */
+  :root {
+    --bg:#0d0f14; --surface:#13161d; --s2:#1a1e28; --s3:#22283a;
+    --border:#2a2f42; --border2:#1d1d28;
+    --accent:#00d4aa; --accent-2:#00b894; --accent-dim:rgba(0,212,170,.12); --accent-bdr:rgba(0,212,170,.35);
+    --green:#00e676; --red:#ff3d52; --blue:#40c4ff; --gold:#ffd740;
+    --text:#e8eaf0; --text2:#c4c8d8; --muted:#7a8099; --muted2:#555c75;
+    --r:6px; --r-lg:10px; --r-xl:14px;
+    --shadow:0 6px 24px rgba(0,0,0,.5);
+    --t:border-color .15s ease, background .15s ease, color .15s ease, transform .12s ease;
+  }
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    font-family:'Barlow',system-ui,sans-serif; background:var(--bg); color:var(--text);
+    font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased; min-height:100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(0,212,170,.05) 0%, transparent 42%),
+      radial-gradient(circle at 100% 100%, rgba(64,196,255,.04) 0%, transparent 40%);
+    background-attachment:fixed;
+    padding:0 14px calc(40px + env(safe-area-inset-bottom));
+    max-width:720px; margin:0 auto;
+  }
+  .mono { font-family:'IBM Plex Mono',ui-monospace,monospace; }
+  ::-webkit-scrollbar { width:5px; height:5px; }
+  ::-webkit-scrollbar-thumb { background:var(--s3); border-radius:3px; }
+  button { font-family:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  code { font-family:'IBM Plex Mono',monospace; color:var(--accent); }
+
+  /* ── Header ── */
+  header {
+    position:sticky; top:0; z-index:10; background:rgba(13,15,20,.88);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    padding:calc(12px + env(safe-area-inset-top)) 0 11px; border-bottom:1px solid var(--border); margin-bottom:16px;
+  }
+  .brand { display:flex; align-items:center; gap:11px; }
+  .logo {
+    width:38px; height:38px; border-radius:9px; flex:none; background:var(--surface);
+    border:1px solid var(--accent-bdr); display:grid; place-items:center; box-shadow:inset 0 0 16px rgba(0,212,170,.12);
+  }
+  .logo svg { width:22px; height:22px; }
+  .brand .t { flex:1; min-width:0; }
+  .brand h1 { font-size:17px; font-weight:800; letter-spacing:.3px; line-height:1.1; }
+  .brand h1 span { color:var(--accent); }
+  .brand .sub { font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-top:2px; }
+  .tag-diag {
+    font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; letter-spacing:.05em;
+    padding:4px 8px; border-radius:5px; border:1px solid var(--blue); color:var(--blue); background:rgba(64,196,255,.08);
+  }
+
+  .lead { font-size:13.5px; color:var(--muted); margin:0 2px 4px; line-height:1.55; }
+  .lead b { color:var(--text2); font-weight:600; }
+
+  /* ── Botones ── */
+  .btn {
+    display:flex; align-items:center; gap:9px; width:100%; text-align:left;
+    padding:14px 15px; border-radius:var(--r); border:1px solid var(--border);
+    background:var(--s2); color:var(--text); font-weight:600; font-size:14px; transition:var(--t); margin-bottom:9px;
+  }
+  .btn:active { transform:translateY(1px); }
+  .btn.primary { background:var(--accent); border-color:var(--accent-2); color:#06110e; font-weight:700; }
+  .btn.ghost { background:transparent; color:var(--muted); }
+  .btn svg { width:17px; height:17px; flex:none; }
+  .row { display:flex; gap:9px; }
+  .row .btn { margin-bottom:0; justify-content:center; }
+
+  /* ── Veredicto ── */
+  .verdict {
+    border:1px solid var(--border); border-radius:var(--r-lg); padding:14px 15px; margin:16px 0; background:var(--surface);
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .verdict .dot { width:10px; height:10px; border-radius:50%; background:var(--muted2); margin-top:5px; flex:none; }
+  .verdict.ok  { border-color:var(--accent-bdr); background:var(--accent-dim); }
+  .verdict.ok .dot  { background:var(--green); box-shadow:0 0 8px var(--green); }
+  .verdict.bad { border-color:rgba(255,61,82,.4); background:rgba(255,61,82,.07); }
+  .verdict.bad .dot { background:var(--red); box-shadow:0 0 8px var(--red); }
+  .verdict .vt { font-size:15px; font-weight:700; margin-bottom:3px; }
+  .verdict .vt.g { color:var(--green); } .verdict .vt.r { color:var(--red); } .verdict .vt.y { color:var(--gold); }
+  .verdict .vd { font-size:12.5px; color:var(--muted); line-height:1.55; }
+  .verdict .pill {
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600;
+    padding:2px 7px; border-radius:5px; border:1px solid currentColor; margin-left:6px; vertical-align:middle;
+  }
+
+  /* ── Terminal ── */
+  #log {
+    background:#0a0c11; border:1px solid var(--border2); border-radius:var(--r); padding:12px 13px; margin-top:14px;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.6; white-space:pre-wrap; word-break:break-word;
+    min-height:140px; max-height:52vh; overflow:auto; color:var(--muted);
+  }
+  .l-ok{ color:var(--green); } .l-bad{ color:var(--red); } .l-warn{ color:var(--gold); }
+  .l-dim{ color:var(--muted2); } .l-step{ color:var(--accent); }
+
+  footer { color:var(--muted2); font-size:11.5px; margin-top:20px; line-height:1.7; }
+  footer a { color:var(--accent); text-decoration:none; }
+  footer b { color:var(--text2); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M13.5 2 5 13.5h5.2L9 22l9-12h-5.3L13.5 2Z" fill="#00d4aa"/></svg>
+      </div>
+      <div class="t">
+        <h1>RoboKit <span>Flasher</span></h1>
+        <div class="sub">Diagnostico de hardware</div>
+      </div>
+      <div class="tag-diag">SPIKE</div>
+    </div>
+  </header>
+
+  <p class="lead">Prueba si tu celular puede tomar el ESP32 por <b>OTG</b>. No flashea nada: solo enumera y reclama la interfaz USB. Si esto pasa, el flasher completo es viable en tu telefono.</p>
+
+  <div style="margin-top:16px">
+    <button id="btnConnect" class="btn primary">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M13.5 2 5 13.5h5.2L9 22l9-12h-5.3L13.5 2Z" fill="currentColor"/></svg>
+      Conectar ESP32 (CP2102 / CH340 / nativo)
+    </button>
+    <button id="btnAny" class="btn ghost">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Mostrar TODOS los dispositivos USB
+    </button>
+    <div class="row">
+      <button id="btnRelease" class="btn" disabled>Soltar / cerrar</button>
+      <button id="btnClear" class="btn">Limpiar</button>
+    </div>
+  </div>
+
+  <div id="verdict" class="verdict">
+    <div class="dot"></div>
+    <div><div class="vt" style="color:var(--muted)">Sin probar</div>
+    <div class="vd">Conecta el ESP32 con el OTG y toca "Conectar".</div></div>
+  </div>
+
+  <div id="log"></div>
+
+  <footer>
+    Requiere Android + Chrome/Edge (Firefox y Samsung Internet NO), pagina por <b>HTTPS</b>, y OTG con <b>datos</b>.<br>
+    Chips: CP2102 <code>10C4:EA60</code> &middot; CH340 <code>1A86:7523</code> &middot; CH9102 <code>1A86:55D4</code> &middot; nativo <code>303A:*</code><br>
+    Volver al <a href="flasher.html">flasher</a>
+  </footer>
+
+<script>
+"use strict";
+
+const KNOWN = [
+  { vendorId: 0x10C4, productId: 0xEA60, name: "Silicon Labs CP2102/CP210x" },
+  { vendorId: 0x1A86, productId: 0x7523, name: "WCH CH340" },
+  { vendorId: 0x1A86, productId: 0x5523, name: "WCH CH341" },
+  { vendorId: 0x1A86, productId: 0x55D4, name: "WCH CH9102" },
+  { vendorId: 0x1A86, productId: 0x55D3, name: "WCH CH343" },
+  { vendorId: 0x0403, productId: 0x6001, name: "FTDI FT232R" },
+  { vendorId: 0x303A,                    name: "Espressif (USB nativo S2/S3/C3/C6)" },
+];
+
+const logEl = document.getElementById("log");
+const verdictEl = document.getElementById("verdict");
+const btnConnect = document.getElementById("btnConnect");
+const btnAny = document.getElementById("btnAny");
+const btnRelease = document.getElementById("btnRelease");
+const btnClear = document.getElementById("btnClear");
+
+let device = null;
+let claimedIface = null;
+
+function log(msg, cls) {
+  const span = document.createElement("span");
+  if (cls) span.className = cls;
+  span.textContent = msg + "\n";
+  logEl.appendChild(span);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function step(n, msg) { log("\n[" + n + "] " + msg, "l-step"); }
+function hex(n, w) { return "0x" + n.toString(16).toUpperCase().padStart(w || 4, "0"); }
+
+function setVerdict(kind, titleCls, title, desc) {
+  verdictEl.className = "verdict " + (kind || "");
+  verdictEl.innerHTML =
+    '<div class="dot"></div><div><div class="vt ' + (titleCls||"") + '">' + title + '</div>' +
+    '<div class="vd">' + desc + '</div></div>';
+}
+
+function chipName(vid, pid) {
+  const exact = KNOWN.find(k => k.vendorId === vid && k.productId === pid);
+  if (exact) return exact.name;
+  const byVid = KNOWN.find(k => k.vendorId === vid && k.productId === undefined);
+  if (byVid) return byVid.name;
+  return "desconocido";
+}
+function chipShort(vid) {
+  if (vid === 0x10C4) return "CP2102";
+  if (vid === 0x1A86) return "CH340";
+  if (vid === 0x0403) return "FTDI";
+  return "puente";
+}
+
+async function run(showAll) {
+  if (!("usb" in navigator)) {
+    setVerdict("bad","r","WebUSB no disponible","Este navegador no soporta WebUSB. Usa Chrome o Edge en Android, por HTTPS.");
+    log("navigator.usb no existe.", "l-bad");
+    return;
+  }
+  if (!window.isSecureContext) log("AVISO: no es contexto seguro. WebUSB fallara. Sirve por HTTPS.", "l-warn");
+
+  try {
+    step(1, "Pidiendo dispositivo (saldra el selector del sistema)...");
+    const filters = showAll ? [] : KNOWN.map(k => k.productId === undefined
+      ? { vendorId: k.vendorId } : { vendorId: k.vendorId, productId: k.productId });
+    device = await navigator.usb.requestDevice({ filters });
+
+    const vid = device.vendorId, pid = device.productId;
+    log("Elegido: VID " + hex(vid) + "  PID " + hex(pid), "l-ok");
+    log("Chip probable: " + chipName(vid, pid));
+    log("Fabricante: " + (device.manufacturerName || "(sin nombre)"));
+    log("Producto:   " + (device.productName || "(sin nombre)"));
+    log("Serie:      " + (device.serialNumber || "(sin serie)"));
+
+    step(2, "Abriendo dispositivo (device.open)...");
+    await device.open();
+    log("Abierto OK.", "l-ok");
+
+    step(3, "Seleccionando configuracion...");
+    if (device.configuration === null) await device.selectConfiguration(1);
+    const cfg = device.configuration;
+    log("Configuracion #" + cfg.configurationValue + " con " + cfg.interfaces.length + " interfaz(es).");
+
+    step(4, "Listando interfaces y endpoints...");
+    let target = null;
+    for (const iface of cfg.interfaces) {
+      const alt = iface.alternate;
+      let bulkIn = null, bulkOut = null;
+      for (const ep of alt.endpoints) {
+        if (ep.type === "bulk" && ep.direction === "in")  bulkIn  = ep.endpointNumber;
+        if (ep.type === "bulk" && ep.direction === "out") bulkOut = ep.endpointNumber;
+      }
+      log("  Interfaz #" + iface.interfaceNumber + "  clase " + hex(alt.interfaceClass, 2) +
+          "  eps=" + alt.endpoints.length +
+          (bulkIn  != null ? "  bulkIN=" + bulkIn  : "") +
+          (bulkOut != null ? "  bulkOUT=" + bulkOut : ""));
+      if (bulkIn != null && bulkOut != null && !target)
+        target = { num: iface.interfaceNumber, bulkIn, bulkOut, cls: alt.interfaceClass };
+    }
+    if (!target) {
+      target = { num: cfg.interfaces[0].interfaceNumber, bulkIn: null, bulkOut: null,
+                 cls: cfg.interfaces[0].alternate.interfaceClass };
+      log("No hay par bulk IN/OUT limpio; probare claim en la interfaz #" + target.num, "l-warn");
+    } else {
+      log("Interfaz de datos candidata: #" + target.num + " (bulkIN " + target.bulkIn + " / bulkOUT " + target.bulkOut + ")", "l-ok");
+    }
+
+    step(5, "Reclamando la interfaz (claimInterface) -- paso decisivo...");
+    await device.claimInterface(target.num);
+    claimedIface = target.num;
+    log("claimInterface OK. Android NO tiene un driver de kernel bloqueando este chip.", "l-ok");
+    btnRelease.disabled = false;
+
+    const nativo = device.vendorId === 0x303A;
+    setVerdict("ok","g",'SI SE PUEDE <span class="pill" style="color:var(--green)">claim OK</span>',
+      "Tu celular tomo el " + chipName(vid, pid) + " por OTG y reclamo la interfaz USB. El flasher completo (WebUSB + esptool-js" +
+      (nativo ? "" : " + driver " + chipShort(vid)) + ") es viable en este telefono.");
+    log("\nResumen: enumerar OK, abrir OK, claim OK. El data path USB esta disponible.", "l-ok");
+    log(nativo ? "Chip nativo (CDC-ACM): el web-serial-polyfill lo maneja casi directo."
+              : "Siguiente paso: portar el mini-driver del chip puente (baudrate/DTR/RTS) sobre este device.", "l-dim");
+
+  } catch (err) { handleError(err); }
+}
+
+function handleError(err) {
+  const name = err && err.name ? err.name : "Error";
+  const msg = err && err.message ? err.message : String(err);
+  log("FALLO: " + name + " -- " + msg, "l-bad");
+
+  if (name === "NotFoundError") {
+    setVerdict("bad","y","No se eligio dispositivo",
+      "El selector no mostro tu ESP32, o cancelaste. Revisa: OTG con datos, cable del ESP32 conectado, y prueba \"Mostrar TODOS\". Si aun asi no aparece, tu Android no expone el chip por OTG.");
+  } else if (name === "SecurityError") {
+    setVerdict("bad","r","Bloqueado por seguridad","Sirve esta pagina por HTTPS (no http:// ni file://).");
+  } else if (/claim|interface|access/i.test(msg)) {
+    setVerdict("bad","r",'El chip lo tomo Android <span class="pill" style="color:var(--red)">claim FALLO</span>',
+      "El dispositivo se vio y abrio, pero el kernel de Android reclama la interfaz (tipico de chips CDC-ACM). En este telefono ese chip no se flashea por WebUSB directo. Probar placa nativa (303A) o el plan .exe/PC.");
+  } else {
+    setVerdict("bad","r","Fallo (" + name + ")", msg);
+  }
+}
+
+async function release() {
+  try {
+    if (device && claimedIface != null) { await device.releaseInterface(claimedIface); claimedIface = null; }
+    if (device) await device.close();
+    log("\nInterfaz liberada y dispositivo cerrado.", "l-dim");
+  } catch (e) { log("Al soltar: " + e.message, "l-warn"); }
+  device = null; btnRelease.disabled = true;
+}
+
+btnConnect.addEventListener("click", () => run(false));
+btnAny.addEventListener("click", () => run(true));
+btnRelease.addEventListener("click", release);
+btnClear.addEventListener("click", () => { logEl.innerHTML = ""; });
+
+log("navigator.usb: " + (("usb" in navigator) ? "presente" : "AUSENTE"), ("usb" in navigator) ? "l-ok" : "l-bad");
+log("isSecureContext: " + window.isSecureContext, window.isSecureContext ? "l-ok" : "l-warn");
+log("userAgent: " + navigator.userAgent, "l-dim");
+</script>
+</body>
+</html>

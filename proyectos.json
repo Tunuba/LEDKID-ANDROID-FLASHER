@@ -1,0 +1,12 @@
+[
+  { "file": "proyectos/led_parpadeo.bin",     "name": "LED parpadeo",        "desc": "Un LED enciende y apaga cada segundo",              "chip": "ESP32", "pins": "GPIO4" },
+  { "file": "proyectos/semaforo_3leds.bin",   "name": "Semaforo 3 LEDs",     "desc": "Rojo, amarillo y verde en secuencia",               "chip": "ESP32", "pins": "GPIO4,5,15" },
+  { "file": "proyectos/buzzer_mario.bin",     "name": "Buzzer - Super Mario","desc": "Toca la melodia de Mario en el buzzer",             "chip": "ESP32", "pins": "GPIO18" },
+  { "file": "proyectos/buzzer_tetris.bin",    "name": "Buzzer - Tetris",     "desc": "Toca la melodia de Tetris",                         "chip": "ESP32", "pins": "GPIO18" },
+  { "file": "proyectos/matriz_corazon.bin",   "name": "Matriz - Corazon",    "desc": "Corazon latiendo en la matriz RGB 8x8",             "chip": "ESP32", "pins": "GPIO5" },
+  { "file": "proyectos/matriz_arcoiris.bin",  "name": "Matriz - Arcoiris",   "desc": "Barrido de colores en la matriz RGB",               "chip": "ESP32", "pins": "GPIO5" },
+  { "file": "proyectos/oled_texto.bin",       "name": "OLED - Texto",        "desc": "Muestra un texto en la pantalla OLED 128x64",       "chip": "ESP32", "pins": "I2C 21/22" },
+  { "file": "proyectos/oled_animacion.bin",   "name": "OLED - Animacion",    "desc": "Animacion en la pantalla OLED",                     "chip": "ESP32", "pins": "I2C 21/22" },
+  { "file": "proyectos/wifi_control_leds.bin","name": "WiFi - Control LEDs", "desc": "Crea red LEDKID-ESP32, controla LEDs desde el celu","chip": "ESP32", "pins": "AP 192.168.4.1" },
+  { "file": "proyectos/secuencia_kitt.bin",   "name": "Secuencia Kitt",      "desc": "Barrido tipo Auto Fantastico con varios LEDs",       "chip": "ESP32", "pins": "GPIO4,5,15,2" }
+]

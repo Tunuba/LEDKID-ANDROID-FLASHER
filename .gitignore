@@ -1,0 +1,6 @@
+# Nada que ignorar por ahora.
+#
+# Los .bin de proyectos/ SI entran, y no es un descuido: este repo es una PWA que
+# flashea firmware YA COMPILADO desde el telefono, asi que los binarios son el
+# producto, no un artefacto de build. Sus fuentes no viven aqui, o sea que un .bin
+# perdido no se regenera con nada de esta carpeta. Son 2,7 MB en total.
